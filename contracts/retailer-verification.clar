@@ -1,30 +1,34 @@
+;; retailer-verification.clar
+;; Simple contract for retailer verification
 
-;; title: retailer-verification
-;; version:
-;; summary:
-;; description:
+;; Data storage for admin
+(define-data-var admin principal tx-sender)
 
-;; traits
-;;
+;; Map of verified retailers
+(define-map verified-retailers principal bool)
 
-;; token definitions
-;;
+;; Register a retailer (anyone can register)
+(define-public (register-retailer)
+  (ok (map-insert verified-retailers tx-sender true))
+)
 
-;; constants
-;;
+;; Verify if a retailer is registered
+(define-read-only (is-verified (retailer principal))
+  (default-to false (map-get? verified-retailers retailer))
+)
 
-;; data vars
-;;
+;; Remove a retailer (admin only)
+(define-public (remove-retailer (retailer principal))
+  (begin
+    (asserts! (is-eq tx-sender (var-get admin)) (err u403))
+    (ok (map-delete verified-retailers retailer))
+  )
+)
 
-;; data maps
-;;
-
-;; public functions
-;;
-
-;; read only functions
-;;
-
-;; private functions
-;;
-
+;; Set a new admin (admin only)
+(define-public (set-admin (new-admin principal))
+  (begin
+    (asserts! (is-eq tx-sender (var-get admin)) (err u403))
+    (ok (var-set admin new-admin))
+  )
+)
